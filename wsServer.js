@@ -2,10 +2,13 @@
 const WebSocketServer = require('ws');
 const fs = require('fs');
 const dumpfile = "./received.json"
+const N = 2.4 //transmission strength
+const measured_power = -69 //measure obtainded from the system
 
+//Distance will be 10^((measured power - rssi)/(10*N))
 // Creating a new websocket server
 const wss = new WebSocketServer.Server({ port: 7777 })
- 
+
 // Creating connection using websocket
 wss.on("connection", ws => {
     console.log("new client connected");
@@ -24,9 +27,32 @@ wss.on("connection", ws => {
 
     fs.watchFile(dumpfile, (curr, prev) =>{
         fs.readFile("received.json", (err, data) =>{
-            //let received = JSON.parse(data);
             if(data != undefined){
-                ws.send(JSON.stringify(JSON.parse(data))) 
+                var locator = []
+                let received_data = JSON.parse(data);
+                for (var single_node in received_data){
+                    for (var addr in received_data[single_node]){
+                        if(locator.find(item => item.address === addr) === undefined){
+                            locator.push({
+                                "address": addr,
+                                "values": [
+                                    {
+                                        "node": single_node,
+                                        "rssi": 10 ** ((measured_power - parseInt(received_data[single_node][addr])) / (10 * N))
+                                    }
+                                ]
+                            })
+                        }else {
+                            locator[locator.findIndex(item => item.address === addr)].values.push({
+                                "node": single_node,
+                                "rssi": 10 ** ((measured_power - parseInt(received_data[single_node][addr])) / (10 * N))                            })
+                        }
+
+                    }
+                }
+                
+                ws.send(JSON.stringify(locator))
+                //ws.send(JSON.stringify(JSON.parse(data))) 
             }
         })
     })
