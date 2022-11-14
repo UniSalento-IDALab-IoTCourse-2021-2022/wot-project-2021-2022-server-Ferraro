@@ -57,15 +57,23 @@ wss.on("connection", ws => {
         })
     })
 
-});
-//console.log("The WebSocket server is running on port 7777");
-/** 
-fs.watchFile(dumpfile, (curr, prev) =>{
-    fs.readFile("received.json", (err, data) =>{
-        //let received = JSON.parse(data);
-        if(data != undefined){
-            wss.send(data) 
-        }
+    fs.watchFile("telemetry.json", (curr, prev) => {
+        fs.readFile("telemetry.json", (err,data)=> {
+            if(data != undefined){
+                monitor = []
+                let received_data = JSON.parse(data)
+                for(let read in received_data){
+                    if (monitor.find(item => item.node === read) === undefined){
+                        monitor.push({
+                            "node": read,
+                            "value": received_data[read]
+                        })
+                    }else(monitor[monitor.findIndex(item => item.node === read)].value = received_data[read])
+                }
+                ws.send(JSON.stringify(monitor))
+            }
+        })
     })
-})
-*/
+
+});
+

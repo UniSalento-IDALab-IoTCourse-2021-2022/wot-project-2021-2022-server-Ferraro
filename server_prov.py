@@ -78,6 +78,9 @@ attached = False
 have_uuid = False
 remote_uuid = None
 
+received_data = {}
+received_temperature = {}
+
 MAIN_MENU = 0
 ON_OFF_CLIENT_MENU = 1
 
@@ -498,9 +501,33 @@ class MyVendorServer(Model):
             print('Received message!')
             datalen = len(data)
             opcode, state = struct.unpack(f'>H{datalen - 2}s')
-            with open('received.json', 'a') as output:
-                output.write(source)
-                output.write(state.decode('utf-8'))
+
+            if opcode != 0xffff:
+                print("returning")
+                return
+
+            received_data[f"{hex(int(source))}"] = json.loads(state.decode('utf-8'))
+        
+            with open('received.json', 'w') as output:
+                output.write(json.dumps(received_data))
+
+class MyTelemetryServer(Model):
+    def __init__(self, model_id):
+        Model.__init__(self, model_id)
+        self.vendor = 0x05F1 #!!! Linux Foundation Company ID, needs to be changed
+    def process_message(self, source, dest, key, data):
+        print('Received message!')
+        datalen = len(data)
+        opcode, state = struct.unpack(f'>Hi', bytes(data))
+
+        if opcode != 0xfffe:
+            print("returning")
+            return
+
+        received_temperature[f"{hex(int(source))}"] = state
+        
+        with open('telemetry.json', 'w') as output:
+            output.write(json.dumps(received_temperature))
 
 def main():
 
@@ -530,11 +557,14 @@ def main():
 		app.set_agent(agent.Agent(bus))
 
 	first_ele = Element(bus, 0x00)
+	second_ele = Element(bus, 0x01)
 
 	print(set_yellow('Register MyVendorServer model on element 0'))
 	first_ele.add_model(MyVendorServer(0x0002))
+	second_ele.add_model(MyTelemetryServer(0x0004))
 	
 	app.add_element(first_ele)
+	app.add_element(second_ele)
 	#app.add_element(second_ele)
 	mainloop = GLib.MainLoop()
     # Provisioning...

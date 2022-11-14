@@ -82,6 +82,8 @@ have_uuid = False
 remote_uuid = None
 
 received_data = {}
+received_temperature = {}
+
 MAIN_MENU = 0
 ON_OFF_CLIENT_MENU = 1
 
@@ -514,7 +516,28 @@ class MyVendorServer(Model):
         
         with open('received.json', 'w') as output:
             output.write(json.dumps(received_data))
+            print("dumped position")
+
+class MyTelemetryServer(Model):
+    def __init__(self, model_id):
+        Model.__init__(self, model_id)
+        self.vendor = 0x05F1 #!!! Linux Foundation Company ID, needs to be changed
+    def process_message(self, source, dest, key, data):
+        print("telemetry message")
+        opcode, state = struct.unpack(f'>Hi', bytes(data))
+        print(int(state))
+
+
+        if opcode != 0xfffe:
+            print("returning")
+            return
+
+        received_temperature[f"{hex(int(source))}"] = state
         
+        with open('telemetry.json', 'w') as output:
+            output.write(json.dumps(received_temperature))
+            print("dumped telemetry")
+
 def main():
 
     DBusGMainLoop(set_as_default=True)
@@ -559,15 +582,19 @@ def main():
         app.set_agent(agent.Agent(bus))
 
     first_ele = Element(bus, 0x00)
+    second_ele = Element(bus, 0x01)
 
     print(set_yellow('Register MyVendorServer model on element 0'))
     first_ele.add_model(MyVendorServer(0x0002))
-    
+    second_ele.add_model(MyTelemetryServer(0x0004))
+
+     
     app.add_element(first_ele)
+    app.add_element(second_ele)
     #app.add_element(second_ele)
     mainloop = GLib.MainLoop()
     
-    token = 0x5c882363f5806b83
+    token = 0x1822448d2a8d6073
     attach(token)
 
     mainloop.run()
