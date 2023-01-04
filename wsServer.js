@@ -52,7 +52,6 @@ wss.on("connection", ws => {
                 }
                 
                 ws.send(JSON.stringify(locator))
-                //ws.send(JSON.stringify(JSON.parse(data))) 
             }
         })
     })
