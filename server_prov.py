@@ -496,7 +496,7 @@ class Model():
 class MyVendorServer(Model):
     def __init__(self, model_id):
         Model.__init__(self, model_id)
-        self.vendor = 0x05F1 #!!! Linux Foundation Company ID, needs to be changed
+        self.vendor = 0x05F1 #!!! Linux Foundation Company ID
         def process_message(self, source, dest, key, data):
             print('Received message!')
             datalen = len(data)
@@ -514,7 +514,7 @@ class MyVendorServer(Model):
 class MyTelemetryServer(Model):
     def __init__(self, model_id):
         Model.__init__(self, model_id)
-        self.vendor = 0x05F1 #!!! Linux Foundation Company ID, needs to be changed
+        self.vendor = 0x05F1 #!!! Linux Foundation Company ID
     def process_message(self, source, dest, key, data):
         print('Received message!')
         datalen = len(data)
@@ -565,7 +565,6 @@ def main():
 	
 	app.add_element(first_ele)
 	app.add_element(second_ele)
-	#app.add_element(second_ele)
 	mainloop = GLib.MainLoop()
     # Provisioning...
 	if agent == None:
@@ -581,8 +580,6 @@ def main():
 		reply_handler=join_cb,
 		error_handler=join_error_cb)
     
-    #token = 0xf7e254e32e8388d7
-	#attach(token)
 
 	mainloop.run()
 	
