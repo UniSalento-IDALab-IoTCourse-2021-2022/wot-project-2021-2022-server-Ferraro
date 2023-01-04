@@ -10,7 +10,6 @@ import dbus
 import dbus.service
 import dbus.exceptions
 import json
-#from gwebsockets import server as sv
 
 from threading import Timer
 import time
@@ -379,7 +378,6 @@ class Element(dbus.service.Object):
         props['Models'] = dbus.Array(sig_models, signature='(qa{sv})')
         props['VendorModels'] = dbus.Array(vendor_models,
                             signature='(qqa{sv})')
-        #print(props)
         return { MESH_ELEMENT_IFACE: props }
 
     def add_model(self, model):
@@ -499,7 +497,7 @@ class Model():
 class MyVendorServer(Model):
     def __init__(self, model_id):
         Model.__init__(self, model_id)
-        self.vendor = 0x05F1 #!!! Linux Foundation Company ID, needs to be changed
+        self.vendor = 0x05F1 #!!! Linux Foundation Company ID
     def process_message(self, source, dest, key, data):
         print('Received message!')
         datalen = len(data)
@@ -509,8 +507,6 @@ class MyVendorServer(Model):
             print("returning")
             return
 
-        #server.send_message(f"{hex(int(source))} {state.decode('utf-8')}")
-        #print("message sent")
 
         received_data[f"{hex(int(source))}"] = json.loads(state.decode('utf-8'))
         
@@ -521,7 +517,7 @@ class MyVendorServer(Model):
 class MyTelemetryServer(Model):
     def __init__(self, model_id):
         Model.__init__(self, model_id)
-        self.vendor = 0x05F1 #!!! Linux Foundation Company ID, needs to be changed
+        self.vendor = 0x05F1 #!!! Linux Foundation Company ID
     def process_message(self, source, dest, key, data):
         print("telemetry message")
         opcode, state = struct.unpack(f'>Hi', bytes(data))
@@ -560,23 +556,7 @@ def main():
     mesh_net.connect_to_signal('InterfacesRemoved', interfaces_removed_cb)
 
     app = Application(bus)
-    """
-    # setting up WebSocket server
-
-    def message_received_cb(session, message):
-        pass
-
-    def session_started_cb(server, session):
-        session.connect("message-received", message_received_cb)
-
-    server = sv.Server()
-    server.connect("session-started", session_started_cb)
-    service = sv.Gio.SocketService()
-    service.connect("incoming", server._incoming_connection_cb)
-    port = service.add_inet_port(WEBSOCKET_PORT, None)
-    print("Websocket server listening")
-    """
-
+    
     # Provisioning agent
     if agent != None:
         app.set_agent(agent.Agent(bus))
@@ -591,7 +571,6 @@ def main():
      
     app.add_element(first_ele)
     app.add_element(second_ele)
-    #app.add_element(second_ele)
     mainloop = GLib.MainLoop()
     
     token = 0x1822448d2a8d6073
